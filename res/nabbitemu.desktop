@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Nabbitemu
+GenericName=TI Calculator Emulator
+Comment=Emulate TI-73/81/82/83/84/85/86 graphing calculators
+Exec=nabbitemu %f
+TryExec=nabbitemu
+Icon=nabbitemu
+Terminal=false
+Categories=Education;Math;Emulator;Game;
+Keywords=calculator;TI;emulator;wabbitemu;ti83;ti84;
+StartupNotify=true

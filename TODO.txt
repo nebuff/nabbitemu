@@ -1,0 +1,64 @@
+TODO
+=====
+Updated: 06/13/2012
+Update this date whenever changes are made!
+
+This is a non-exculsive TODO list for wxWabbitemu.
+This is a "take and work on it" kind of thing, so don't worry
+about time constraints for implementing these features! ;)
+
+This file is best viewed in a text editor with monospaced
+font (also known as fixed width font - examples include
+Courier New).
+
+If you are appending to this list, follow this format:
+= Feature/things
+++++ Suggested by: username/name
+++++ Rationale: why does this need to be implemented?
+++++ Who's working on it: username/name working on it, as well
+++++                      as suggestions on who could do it
+++++ Implementor's notes: notes by the implementor
+
+Separate them into a new line if they get too long, and indent
+with spaces to the end of the colon+space.
+
+That said, here are the things to be done:
+
+= Debugger
+++++ Suggested by: alberthdev
+++++ Rationale: meet the current featureset of Wabbitemu
+++++ Who's working on it: Buckeye, but may need support of other people to
+                          finish the port
+++++ Implementor's notes: N/A
+
+= Sound
+++++ Suggested by: alberthdev
+++++ Rationale: meet the current featureset of Wabbitemu
+++++ Who's working on it: Nobody
+++++ Implementor's notes: N/A
+
+= Linking
+++++ Suggested by: alberthdev
+++++ Rationale: meet the current featureset of Wabbitemu
+++++ Who's working on it: Nobody
+++++ Implementor's notes: N/A
+
+= Wabbitemu shared library
+++++ Suggested by: alberthdev
+++++ Rationale: Allow developers to include Wabbitemu in a library for
+++++            their own use in their app. Code from here will probably
+++++            be copied back to the original Wabbitemu project, since
+++++            demand for such a library exists! ;)
+++++ Who's working on it: Nobody
+++++ Implementor's notes: N/A
+
+= Control emulated calculator with real calculator
+++++ Suggested by: alberthdev
+++++ Rationale: Allow users to use their real calculator to control
+++++            instead of using a mouse or keyboard. This will need
+++++            a LOT of help from ASM devs, TiLP devs. and others.
+++++            It may be possible to simply use a bit of remote8x code.
+++++ Who's working on it: Nobody
+++++ Implementor's notes: N/A
+
+= ?? (add more stuff here!)
