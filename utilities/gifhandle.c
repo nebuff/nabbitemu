@@ -72,7 +72,7 @@ BOOL get_gif_filename() {
 #ifdef _WINDOWS
 #ifndef _WINDLL
 		if (SaveFile(gif_file_name, _T("Graphics Interchange Format  (*.gif)\0*.gif\0All Files (*.*)\0*.*\0\0"),
-						_T("Wabbitemu GIF File Target"), _T("gif")))
+						_T("Nabbitemu GIF File Target"), _T("gif")))
 			//if we cancel, mark the menu and set to idle
 			return FALSE;
 #endif

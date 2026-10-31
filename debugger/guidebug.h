@@ -22,10 +22,10 @@
  * We'll get there... eventually! :)
  */
 
-class WabbitemuDebugger: public wxFrame, public DebuggerWindowClass
+class NabbitemuDebugger: public wxFrame, public DebuggerWindowClass
 {
 public:
-	WabbitemuDebugger(WabbitemuFrame *windowMain, LPCALC lpCalc);
+	NabbitemuDebugger(NabbitemuFrame *windowMain, LPCALC lpCalc);
 	void DebugUpdateWindow();
 	DECLARE_EVENT_TABLE()
 protected:
@@ -55,7 +55,7 @@ protected:
 	
 private:
 	LPCALC lpCalc;
-	WabbitemuFrame *wabbitemuFrame;
+	NabbitemuFrame *nabbitemuFrame;
 	
 	
 	void OnClose(wxCloseEvent& event);

@@ -176,7 +176,7 @@ int ReadIntelHex(FILE *ifile, INTELHEX_t *ihex) {
 	memset(str, 0x00, ARRAYSIZE(str));
 	if (!fgets((char*) str, 580, ifile))
 		return 0;
-	if (str[0] == 0) memcpy(str, str+1, 579);
+	if (str[0] == 0) memmove(str, str + 1, 579);
 #ifdef WINVER
 	if (sscanf_s((const char*) str, ":%02X%04X%02X%*s", &size, &addr, &type) != 3)
 #else

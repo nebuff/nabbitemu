@@ -12,7 +12,7 @@ WizardStartPage::WizardStartPage( wxWizard* parent) : wxWizardPage( parent )
 	wxBoxSizer* bSizer18;
 	bSizer18 = new wxBoxSizer( wxVERTICAL );
 	
-	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("This wizard will guide you through running Wabbitemu for the first time.\n\n A ROM is required to emulate TI calculators. How do you want to get a ROM image for Wabbitemu?"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("This wizard will guide you through running Nabbitemu for the first time.\n\n A ROM is required to emulate TI calculators. How do you want to get a ROM image for Nabbitemu?"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1->Wrap(400);
 	bSizer18->Add( m_staticText1, 0, wxALL, 5 );
 	

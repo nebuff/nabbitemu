@@ -2,6 +2,7 @@
 #include "gui.h"
 #include "calc.h"
 #include <wx/config.h>
+#include <wx/stopwatch.h>
 
 
 #define MAX_FILES 255
@@ -21,7 +22,7 @@ typedef struct ParsedCmdArgs
 } ParsedCmdArgs_t;
 
 
-class WabbitemuApp: public wxApp
+class NabbitemuApp: public wxApp
 {
 private:
 	virtual bool OnInit();
@@ -32,7 +33,8 @@ private:
 	void SaveSettings(LPCALC lpCalc);
 	wxConfigBase *settingsConfig;
 	wxTimer *timer;
-	unsigned GetTickCount();
+	wxStopWatch m_frameWatch;
+	long m_pendingMs;
 	
 	ParsedCmdArgs_t parsedArgs;
 	void ParseCommandLineArgs();

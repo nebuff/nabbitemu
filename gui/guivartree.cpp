@@ -260,7 +260,7 @@ int VarTree::SetVarName(TCHAR *filePath) {
 	int filterIndex;
 	const TCHAR lpstrFilter[] = wxT("Programs  (*.8xp)|*.8xp|Applications (*.8xk)|*.8xk|App Vars (*.8xv)|*.8xv|Lists  (*.8xl)|*.8xl|Real/Complex Variables  (*.8xn)|*.8xn|\
 Pictures  (*.8xi)|*.8xi|GDBs  (*.8xd)|*.8xd|Matrices  (*.8xm)|*.8xm|Strings  (*.8xs)|*.8xs|Groups  (*.8xg)|*.8xg|All Files (*.*)|*.*");
-	const TCHAR lpstrTitle[] = wxT("Wabbitemu Export");
+	const TCHAR lpstrTitle[] = wxT("Nabbitemu Export");
 	TCHAR lpstrFile[MAX_PATH];
 	_tcscpy(lpstrFile, filePath);
 	size_t i = _tcslen(lpstrFile);

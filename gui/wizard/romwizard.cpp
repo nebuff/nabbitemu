@@ -149,7 +149,7 @@ void RomWizard::OnFinish(wxWizardEvent &event) {
 		int model = calcTypePage->GetModel();
 		
 		if (!SaveFile(buffer, _T("ROMs  (*.rom)\0*.rom\0Bins  (*.bin)\0*.bin\0All Files (*.*)\0*.*\0\0"),
-					_T("Wabbitemu Export Rom"), _T("rom"))) {
+					_T("Nabbitemu Export Rom"), _T("rom"))) {
 			printf("Going for save! [%254s]\n", buffer);
 			osPath = osPage->m_filePicker2->GetPath();
 			

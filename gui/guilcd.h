@@ -11,10 +11,10 @@
 
 void SaveStateDialog(LPCALC lpCalc);
 #define MAX_SHADES 255
-class WabbitemuLCD: public wxWindow
+class NabbitemuLCD: public wxWindow
 {
 public:
-    WabbitemuLCD(wxFrame *mainFrame, LPCALC lpCalc);
+    NabbitemuLCD(wxFrame *mainFrame, LPCALC lpCalc);
 
 	void PaintNow();
 protected:
@@ -30,6 +30,12 @@ private:
 	void FinalizeButtons();
 
 	bool hasDrawnLCD;
+	// Persistent 128x64 RGB image plus the cached skin overlay; rebuilding
+	// these per paint was the hot path in the renderer.
+	wxImage m_lcdImage;
+	wxBitmap m_skinOverlay;
+	wxSize m_skinOverlaySize;
+	const unsigned char *m_skinStamp;
 	LPCALC lpCalc;
 	wxFrame *mainFrame;
 };

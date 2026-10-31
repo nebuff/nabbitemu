@@ -10,6 +10,12 @@ string(STRIP "${NABBITEMU_VERSION}" NABBITEMU_VERSION)
 # set the project name
 project(nabbitemu VERSION ${NABBITEMU_VERSION} LANGUAGES C CXX)
 
+# A plain `cmake -B build` used to produce an unoptimised binary; default to
+# Release so local builds match the packaged ones.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+endif()
+
 include(GNUInstallDirs)
 
 # Sources are a mix of C and C++ that is built as C++; pin a standard that every
@@ -97,6 +103,17 @@ target_include_directories(nabbitemu PUBLIC
                            )
 
 target_link_libraries(nabbitemu ${wxWidgets_LIBRARIES})
+
+# Link-time optimisation trims the emulation hot loop; skipped silently on
+# toolchains that do not support it.
+option(NABBITEMU_LTO "Enable link-time optimisation for release builds" ON)
+if(NABBITEMU_LTO AND CMAKE_BUILD_TYPE STREQUAL "Release")
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT NABBITEMU_IPO_OK OUTPUT NABBITEMU_IPO_OUTPUT)
+    if(NABBITEMU_IPO_OK)
+        set_property(TARGET nabbitemu PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+endif()
 
 add_definitions(-DHIGH_SHADE_GIF -DVERBOSE -D_LINUX -DWXVER)
 

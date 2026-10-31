@@ -3,19 +3,19 @@
 #include "core.h"
 #include "droptarget.h"
 
-BEGIN_EVENT_TABLE(WabbitemuLCD, wxWindow)
-	EVT_PAINT(WabbitemuLCD::OnPaint)
-	EVT_KEY_DOWN(WabbitemuLCD::OnKeyDown)
-	EVT_KEY_UP(WabbitemuLCD::OnKeyUp)
+BEGIN_EVENT_TABLE(NabbitemuLCD, wxWindow)
+	EVT_PAINT(NabbitemuLCD::OnPaint)
+	EVT_KEY_DOWN(NabbitemuLCD::OnKeyDown)
+	EVT_KEY_UP(NabbitemuLCD::OnKeyUp)
 	
-	EVT_LEFT_DOWN(WabbitemuLCD::OnLeftButtonDown)
-	EVT_LEFT_UP(WabbitemuLCD::OnLeftButtonUp)
+	EVT_LEFT_DOWN(NabbitemuLCD::OnLeftButtonDown)
+	EVT_LEFT_UP(NabbitemuLCD::OnLeftButtonUp)
 END_EVENT_TABLE()
 
 unsigned char redColors[MAX_SHADES+1];
 unsigned char greenColors[MAX_SHADES+1];
 unsigned char blueColors[MAX_SHADES+1];
-WabbitemuLCD::WabbitemuLCD(wxFrame *mainFrame, LPCALC lpCalc)
+NabbitemuLCD::NabbitemuLCD(wxFrame *mainFrame, LPCALC lpCalc)
 	: wxWindow(mainFrame, ID_LCD, wxPoint(0,0), lpCalc->LCDRect.GetSize()) {
 	this->lpCalc = lpCalc;
 	this->mainFrame = mainFrame;
@@ -27,9 +27,12 @@ WabbitemuLCD::WabbitemuLCD(wxFrame *mainFrame, LPCALC lpCalc)
 		blueColors[i] = (0x88*(256-(LCD_HIGH/MAX_SHADES)*i))/255;
 	}
 	hasDrawnLCD = false;
+	m_lcdImage.Create(128, 64, false);
+	m_skinOverlaySize = wxSize(0, 0);
+	m_skinStamp = NULL;
 }
 
-void WabbitemuLCD::OnLeftButtonDown(wxMouseEvent& event)
+void NabbitemuLCD::OnLeftButtonDown(wxMouseEvent& event)
 {
 	event.Skip(true);
 	static wxPoint pt;
@@ -75,7 +78,7 @@ void WabbitemuLCD::OnLeftButtonDown(wxMouseEvent& event)
 	}
 }
 
-void WabbitemuLCD::OnLeftButtonUp(wxMouseEvent& event)
+void NabbitemuLCD::OnLeftButtonUp(wxMouseEvent& event)
 {
 	event.Skip(true);
 	static wxPoint pt;
@@ -92,13 +95,13 @@ void WabbitemuLCD::OnLeftButtonUp(wxMouseEvent& event)
 	lpCalc->cpu.pio.keypad->on_pressed &= ~KEY_MOUSEPRESS;
 }
 
-void WabbitemuLCD::OnResize(wxSizeEvent& event)
+void NabbitemuLCD::OnResize(wxSizeEvent& event)
 {
 	event.Skip(false);
 }
 
 //TODO: forward these events somehow
-void WabbitemuLCD::OnKeyDown(wxKeyEvent& event)
+void NabbitemuLCD::OnKeyDown(wxKeyEvent& event)
 {
 	int keycode = event.GetKeyCode();
 	if (keycode == WXK_F8) {
@@ -126,7 +129,7 @@ void WabbitemuLCD::OnKeyDown(wxKeyEvent& event)
 	}
 }
 
-void WabbitemuLCD::OnKeyUp(wxKeyEvent& event)
+void NabbitemuLCD::OnKeyUp(wxKeyEvent& event)
 {
 	int key = event.GetKeyCode();
 	if (key == WXK_SHIFT) {
@@ -138,7 +141,7 @@ void WabbitemuLCD::OnKeyUp(wxKeyEvent& event)
 	FinalizeButtons();
 }
 
-void WabbitemuLCD::FinalizeButtons() {
+void NabbitemuLCD::FinalizeButtons() {
 	int group, bit;
 	keypad_t *kp = lpCalc->cpu.pio.keypad;
 	for(group = 0; group < 7; group++) {
@@ -152,7 +155,7 @@ void WabbitemuLCD::FinalizeButtons() {
 	}
 }
 
-void WabbitemuLCD::OnPaint(wxPaintEvent& event)
+void NabbitemuLCD::OnPaint(wxPaintEvent& event)
 {
 	if (this->mainFrame->IsIconized()) {
 		return;
@@ -175,97 +178,50 @@ void WabbitemuLCD::OnPaint(wxPaintEvent& event)
 	}
 } 
 
-void WabbitemuLCD::PaintLCD(wxWindow *window, wxPaintDC *wxDCDest)
+void NabbitemuLCD::PaintLCD(wxWindow *window, wxPaintDC *wxDCDest)
 {
-	unsigned char *screen;
 	LCD_t *lcd = lpCalc->cpu.pio.lcd;
-	wxSize rc = lpCalc->LCDRect.GetSize();
-	int scale = lpCalc->scale;
-	int draw_width = lpCalc->LCDRect.GetWidth();
-	int draw_height = lpCalc->LCDRect.GetHeight();
-	wxPoint drawPoint(0, 0);
-	wxMemoryDC wxMemDC;
-	if (lcd->active == false) {
-		unsigned char lcd_data[128*64];
-		memset(lcd_data, 0, sizeof(lcd_data));
-		unsigned char rgb_data[128*64*3];
-		int i, j;
-		for (i = j = 0; i < 128*64; i++, j+=3) {
-			rgb_data[j] = redColors[lcd_data[i]];
-			rgb_data[j+1] = greenColors[lcd_data[i]];
-			rgb_data[j+2] = blueColors[lcd_data[i]];
+	if (lcd == NULL) {
+		return;
+	}
+	if (!m_lcdImage.IsOk()) {
+		m_lcdImage.Create(128, 64, false);
+	}
+
+	// Convert the shaded LCD buffer into the reusable RGB image.
+	unsigned char *rgb = m_lcdImage.GetData();
+	const unsigned char *shades = lcd->active ? LCD_image(lcd) : NULL;
+	for (int i = 0; i < 128 * 64; i++) {
+		const unsigned char shade = shades ? shades[i] : 0;
+		rgb[3 * i] = redColors[shade];
+		rgb[3 * i + 1] = greenColors[shade];
+		rgb[3 * i + 2] = blueColors[shade];
+	}
+
+	// One small upload and a nearest-neighbour stretch: the previous code
+	// allocated two full-size images (plus an alpha buffer) per frame.
+	wxBitmap lcdBitmap(m_lcdImage);
+	wxMemoryDC memDC;
+	memDC.SelectObject(lcdBitmap);
+	const int destWidth = lpCalc->LCDRect.GetWidth();
+	const int destHeight = lpCalc->LCDRect.GetHeight();
+	wxDCDest->StretchBlit(0, 0, destWidth, destHeight, &memDC, 0, 0, lcd->width, 64);
+	memDC.SelectObject(wxNullBitmap);
+
+	if (lpCalc->SkinEnabled && lpCalc->calcSkin.IsOk()) {
+		if (!m_skinOverlay.IsOk() || m_skinOverlaySize != lpCalc->LCDRect.GetSize()
+				|| m_skinStamp != lpCalc->calcSkin.GetData()) {
+			wxImage texture = lpCalc->calcSkin.GetSubImage(lpCalc->LCDRect);
+			const int pixels = texture.GetWidth() * texture.GetHeight();
+			unsigned char *alpha = (unsigned char *) malloc(pixels);
+			if (alpha != NULL) {
+				memset(alpha, 108, pixels);
+				texture.SetAlpha(alpha);
+			}
+			m_skinOverlay = wxBitmap(texture);
+			m_skinOverlaySize = lpCalc->LCDRect.GetSize();
+			m_skinStamp = lpCalc->calcSkin.GetData();
 		}
-		wxImage screenImage(128, 64, rgb_data, true);
-		wxBitmap bmpBuf(screenImage.Size(wxSize(lcd->width, 64), wxPoint(0, 0)).Scale(rc.GetWidth(), rc.GetHeight()));
-		wxMemDC.SelectObject(bmpBuf);
-		//draw drag panes
-		/*if (lpCalc->do_drag == TRUE) {
-
-			hdcOverlay = DrawDragPanes(hwnd, hdcDest, 0);
-			BLENDFUNCTION bf;
-			bf.BlendOp = AC_SRC_OVER;
-			bf.BlendFlags = 0;
-			bf.SourceConstantAlpha = 160;
-			bf.AlphaFormat = 0;
-			if (AlphaBlend(	hdc, 0, 0, rc.right, rc.bottom,
-						hdcOverlay, 0, 0, rc.right, rc.bottom,
-						bf ) == FALSE) printf("alpha blend 1 failed\n");
-
-			DeleteDC(hdcOverlay);
-
-		}*/
-
-		//copy to the screen
-		wxDCDest->Blit(drawPoint.x, drawPoint.y, draw_width, draw_height, &wxMemDC, 0, 0);
-		wxMemDC.SelectObject(wxNullBitmap);
-
-	} else {
-		screen = LCD_image( lpCalc->cpu.pio.lcd ) ;
-		unsigned char rgb_data[128*64*3];
-		int i, j;
-		for (i = j = 0; i < 128*64; i++, j+=3) {
-			rgb_data[j] = redColors[screen[i]];
-			rgb_data[j+1] = greenColors[screen[i]];
-			rgb_data[j+2] = blueColors[screen[i]];
-		}
-
-		/*wxImageResizeQuality scalingMode = wxIMAGE_QUALITY_NORMAL;
-		//hiqh quality does bicubic sampling which looks terrible on our image
-		if (lcd->width * lpCalc->scale != rc.GetWidth())
-			scalingMode = wxIMAGE_QUALITY_HIGH;
-		else
-			scalingMode = wxIMAGE_QUALITY_NORMAL;*/
-		wxImage screenImage(128, 64, rgb_data, true);
-		wxBitmap bmpBuf(screenImage.Size(wxSize(lcd->width, 64), wxPoint(0, 0)).Scale(rc.GetWidth(), rc.GetHeight()));
-		wxMemDC.SelectObject(bmpBuf);
-		//if were dragging something we will draw these nice panes
-		/*BLENDFUNCTION bf;
-		bf.BlendOp = AC_SRC_OVER;
-		bf.BlendFlags = 0;
-		bf.SourceConstantAlpha = 160;
-		bf.AlphaFormat = 0;
-
-		if (lpCalc->do_drag == TRUE) {
-
-			hdcOverlay = DrawDragPanes(hwnd, hdcDest, 0);
-
-			if (AlphaBlend(	hdc, 0, 0, rc.right, rc.bottom,
-						hdcOverlay, 0, 0, rc.right, rc.bottom,
-						bf ) == FALSE) printf("alpha blend 1 failed\n");
-
-			DeleteDC(hdcOverlay);
-
-		}*/
-		//finally copy up the screen image
-		wxDCDest->Blit(drawPoint.x, drawPoint.y, draw_width, draw_height, &wxMemDC, 0, 0);
-		//lets give it a texture to look nice
-		wxImage skinTexture = lpCalc->calcSkin.GetSubImage(lpCalc->LCDRect);
-		int textureSize = lpCalc->LCDRect.GetWidth() * lpCalc->LCDRect.GetHeight();
-		unsigned char *alpha = (unsigned char *) malloc(textureSize);
-		memset(alpha, 108, textureSize);
-		skinTexture.SetAlpha(alpha);
-		wxDCDest->DrawBitmap(skinTexture, drawPoint.x, drawPoint.y, true);
-		wxMemDC.SelectObject(wxNullBitmap);
-
+		wxDCDest->DrawBitmap(m_skinOverlay, 0, 0, true);
 	}
 }

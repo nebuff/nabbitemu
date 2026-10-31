@@ -8,5 +8,5 @@ TryExec=nabbitemu
 Icon=nabbitemu
 Terminal=false
 Categories=Education;Math;Emulator;Game;
-Keywords=calculator;TI;emulator;wabbitemu;ti83;ti84;
+Keywords=calculator;TI;emulator;nabbitemu;ti83;ti84;
 StartupNotify=true

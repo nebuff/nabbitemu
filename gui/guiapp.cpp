@@ -3,37 +3,58 @@
 #include "wizard/romwizard.h"
 #include "sendfile.h"
 
-WabbitemuFrame *frames[MAX_CALCS];
+NabbitemuFrame *frames[MAX_CALCS];
 
-BOOL WabbitemuApp::DoRomWizard() {
+BOOL NabbitemuApp::DoRomWizard() {
 	RomWizard wizard;	
 	bool success = wizard.Begin();
 	return success;
 }
 
-void WabbitemuApp::LoadSettings(LPCALC lpCalc)
+void NabbitemuApp::LoadSettings(LPCALC lpCalc)
 {
-	settingsConfig = new wxConfig(wxT("Wabbitemu"));
-	wxString tempString;
-	settingsConfig->Read(wxT("/rom_path"), &tempString, wxEmptyString);
-	_tcscpy(lpCalc->rom_path, tempString.c_str());
+	settingsConfig = new wxConfig(wxT("Nabbitemu"));
+	wxString romPath;
+	settingsConfig->Read(wxT("/rom_path"), &romPath, wxEmptyString);
 	settingsConfig->Read(wxT("/SkinEnabled"), &lpCalc->SkinEnabled, FALSE);
+
+	// One-time import of the wxWabbitemu-era settings so upgrading keeps the
+	// ROM path and skin choice instead of dropping back to the wizard.
+	if (romPath.empty()) {
+		wxConfig legacy(wxT("Wabbitemu"));
+		if (legacy.GetNumberOfEntries(true) > 0) {
+			legacy.Read(wxT("/rom_path"), &romPath, wxEmptyString);
+			bool legacySkin = false;
+			if (legacy.Read(wxT("/SkinEnabled"), &legacySkin)) {
+				lpCalc->SkinEnabled = legacySkin;
+				settingsConfig->Write(wxT("/SkinEnabled"), legacySkin);
+			}
+			if (!romPath.empty()) {
+				settingsConfig->Write(wxT("/rom_path"), romPath);
+			}
+		}
+	}
+
+	// rom_path is a fixed MAX_PATH buffer; the old code used an unbounded copy.
+	_tcsncpy(lpCalc->rom_path, romPath.c_str(), MAX_PATH - 1);
+	lpCalc->rom_path[MAX_PATH - 1] = _T('\0');
 }
 
-bool WabbitemuApp::OnInit()
+bool NabbitemuApp::OnInit()
 {
 	wxImage::AddHandler(new wxPNGHandler);
 	//stolen from the windows version
 	ParseCommandLineArgs();
 
 	memset(frames, 0, sizeof(frames));
+	m_pendingMs = 0;
+	m_frameWatch.Start();
 	LPCALC lpCalc = calc_slot_new();
 	LoadSettings(lpCalc);
 	
-	WabbitemuFrame *frame;
 	int result = rom_load(lpCalc, lpCalc->rom_path);
 	if (result == TRUE) {
-		frame = gui_frame(lpCalc);
+		gui_frame(lpCalc);
 	} else {
 		calc_slot_free(lpCalc);
 		BOOL loadedRom = FALSE;
@@ -55,12 +76,12 @@ bool WabbitemuApp::OnInit()
 	}
 	LoadCommandlineFiles((INT_PTR) lpCalc, LoadToLPCALC);
 	timer = new wxTimer();
-	timer->Connect(wxEVT_TIMER, (wxObjectEventFunction) &WabbitemuApp::OnTimer);
+	timer->Connect(wxEVT_TIMER, (wxObjectEventFunction) &NabbitemuApp::OnTimer);
 	timer->Start(TPF, false);
 	return TRUE;
 }
 
-void WabbitemuApp::SaveSettings(LPCALC lpCalc) {
+void NabbitemuApp::SaveSettings(LPCALC lpCalc) {
 #ifdef _UNICODE
 	wxString rom_path(lpCalc->rom_path, wxConvUTF8);
 #else
@@ -71,8 +92,10 @@ void WabbitemuApp::SaveSettings(LPCALC lpCalc) {
 	settingsConfig->Flush();
 }
 
-int WabbitemuApp::OnExit() {
-	SaveSettings(&calcs[0]);
+int NabbitemuApp::OnExit() {
+	if (calcs[0].active) {
+		SaveSettings(&calcs[0]);
+	}
 	//load ROMs first
 	for (int i = 0; i < parsedArgs.num_rom_files; i++) {
 		free(parsedArgs.rom_files[i]);
@@ -97,69 +120,64 @@ int WabbitemuApp::OnExit() {
 }
 
 
-unsigned WabbitemuApp::GetTickCount()
-{
-		struct timeval tv;
-		if(gettimeofday(&tv, NULL) != 0)
-			return 0;
+// Emulation is paced from a monotonic stopwatch. The previous code masked a
+// 32-bit millisecond counter with 0x3F, so every ~64 ms the frame accounting
+// reset and the emulator would stutter or run fast.
+void NabbitemuApp::OnTimer(wxTimerEvent& event) {
+	long elapsed = m_frameWatch.Time();
+	m_frameWatch.Start();
+	if (elapsed < 0) {
+		elapsed = 0;
+	}
+	// Anything beyond a quarter second is unrecoverable backlog (suspend,
+	// debugger stop, heavy load): drop it instead of freezing the UI.
+	if (elapsed > 250) {
+		elapsed = 250;
+	}
+	m_pendingMs += elapsed;
 
-		return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-}
-
-
-void WabbitemuApp::OnTimer(wxTimerEvent& event) {
-	static int difference;
-	static unsigned prevTimer;
-	unsigned dwTimer = GetTickCount();
-	
-	// How different the timer is from where it should be
-	// guard from erroneous timer calls with an upper bound
-	// that's the limit of time it will take before the
-	// calc gives up and claims it lost time
-	difference += ((dwTimer - prevTimer) & 0x003F) - TPF;
-	prevTimer = dwTimer;
-
-	// Are we greater than Ticks Per Frame that would call for
-	// a frame skip?
-	if (difference > -TPF) {
+	int framesRun = 0;
+	while (m_pendingMs >= TPF && framesRun < 4) {
 		calc_run_all();
-		while (difference >= TPF) {
-			calc_run_all();
-			difference -= TPF;
-		}
+		m_pendingMs -= TPF;
+		framesRun++;
+	}
+	if (m_pendingMs > TPF) {
+		m_pendingMs = TPF;
+	}
 
-		int i;
-		for (i = 0; i < MAX_CALCS; i++) {
-			if (calcs[i].active) {
+	if (framesRun > 0) {
+		for (int i = 0; i < MAX_CALCS; i++) {
+			if (calcs[i].active && frames[i] != NULL) {
 				frames[i]->gui_draw();
 			}
 		}
-	// Frame skip if we're too far ahead.
-	} else {
-		difference += TPF;
 	}
 }
 
-void WabbitemuApp::ParseCommandLineArgs()
+void NabbitemuApp::ParseCommandLineArgs()
 {
 	ZeroMemory(&parsedArgs, sizeof(ParsedCmdArgs));
 	TCHAR tmpstring[512];
 	SEND_FLAG ram = SEND_CUR;
 
 	if (argv && argc > 1) {
-		_tcscpy(tmpstring, argv[1]);
 		for(int i = 1; i < argc; i++) {
-			ZeroMemory(tmpstring, 512);
-			_tcscpy(tmpstring, argv[i]);
+			_tcsncpy(tmpstring, argv[i], ARRAYSIZE(tmpstring) - 1);
+			tmpstring[ARRAYSIZE(tmpstring) - 1] = _T('\0');
 			TCHAR secondChar = toupper(tmpstring[1]);
 			if (*tmpstring != '-' && *tmpstring != '/') {
-				TCHAR *temp = (TCHAR *) malloc(_tcslen(tmpstring) + 1);
+				const size_t pathLen = _tcslen(tmpstring);
+				TCHAR *temp = (TCHAR *) malloc((pathLen + 1) * sizeof(TCHAR));
+				if (temp == NULL) {
+					continue;
+				}
 				_tcscpy(temp, tmpstring);
-				temp[_tcslen(tmpstring) + 1] = '\0';
 				TCHAR extension[5] = _T("");
 				const TCHAR *pext = _tcsrchr(tmpstring, _T('.'));
 				if (pext != NULL) {
-					_tcscpy(extension, pext);
+					_tcsncpy(extension, pext, ARRAYSIZE(extension) - 1);
+					extension[ARRAYSIZE(extension) - 1] = _T('\0');
 				}
 				if (!_tcsicmp(extension, _T(".rom")) || !_tcsicmp(extension, _T(".sav")) || !_tcsicmp(extension, _T(".clc"))) {
 					parsedArgs.rom_files[parsedArgs.num_rom_files++] = temp;
@@ -213,7 +231,7 @@ void LoadToLPCALC(INT_PTR lParam, LPTSTR filePath, SEND_FLAG sendLoc)
 	SendFile(lpCalc, filePath, sendLoc);
 }
 
-void WabbitemuApp::LoadCommandlineFiles(INT_PTR lParam,  void (*load_callback)(INT_PTR, LPTSTR, SEND_FLAG))
+void NabbitemuApp::LoadCommandlineFiles(INT_PTR lParam,  void (*load_callback)(INT_PTR, LPTSTR, SEND_FLAG))
 {
 	//load ROMs first
 	for (int i = 0; i < parsedArgs.num_rom_files; i++) {

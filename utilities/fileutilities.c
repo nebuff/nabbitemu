@@ -89,17 +89,20 @@ int SaveFile(TCHAR *lpstrFile, const TCHAR *lpstrFilter, const TCHAR *lpstrTitle
 }
 
 BOOL ValidPath(TCHAR *lpstrFile) {
-	FILE *file;
+	FILE *file = NULL;
 #ifdef WINVER
 	errno_t error = _tfopen_s(&file, lpstrFile, _T("r"));
-	if (file)
+	if (file != NULL) {
 		fclose(file);
+	}
 	return error == 0;
 #else
 	file = _tfopen_s(lpstrFile, "r");
-	BOOL error = file == NULL;
+	if (file == NULL) {
+		return FALSE;
+	}
 	fclose(file);
-	return error;
+	return TRUE;
 #endif
 }
 
@@ -112,15 +115,17 @@ void GetAppDataString(TCHAR *buffer, int len) {
 		return;
 	}
 	StringCbCopy(buffer, len, env);
-	StringCbCat(buffer, len, _T("\\Wabbitemu\\"));
+	StringCbCat(buffer, len, _T("\\Nabbitemu\\"));
 	free(env);
 #else
-#ifdef _UNICODE
-	wxString envString(getenv("appdata"), wxConvUTF8);
-	_tcscpy(buffer, envString.c_str());
-#else
-	_tcscpy(buffer, getenv("appdata"));
-#endif
-	_tcscat(buffer, _T("/wabbitemu/"));
+	// On Linux the Windows "appdata" variable does not exist; build the
+	// path from HOME instead of dereferencing a NULL getenv() result.
+	const char *home = getenv("HOME");
+	if (home == NULL) {
+		home = ".";
+	}
+	wxString configPath = wxString::FromUTF8(home) + wxT("/.config/nabbitemu/");
+	_tcsncpy(buffer, configPath.c_str(), len - 1);
+	buffer[len - 1] = _T('\0');
 #endif
 }

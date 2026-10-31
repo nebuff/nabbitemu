@@ -33,7 +33,7 @@
 
 bool gif_anim_advance;
 bool silent_mode = false;
-int prevCalcScale;
+int prevCalcScale = 2; // restore the default scale the first time skins are disabled
 enum
 {
 	ID_File_New,
@@ -74,49 +74,49 @@ enum
 	ID_Help_Website
 };
 
-BEGIN_EVENT_TABLE(WabbitemuFrame, wxFrame)
-	EVT_PAINT(WabbitemuFrame::OnPaint)
-	EVT_SIZE(WabbitemuFrame::OnResize)
-	EVT_MENU(ID_File_New, WabbitemuFrame::OnFileNew)
-	EVT_MENU(ID_File_Open, WabbitemuFrame::OnFileOpen)
-	EVT_MENU(ID_File_Save, WabbitemuFrame::OnFileSave)
-	EVT_MENU(ID_File_Close, WabbitemuFrame::OnFileClose)
-	EVT_MENU(ID_File_Gif, WabbitemuFrame::OnFileGIF)
-	EVT_MENU(ID_File_Quit, WabbitemuFrame::OnFileQuit)
+BEGIN_EVENT_TABLE(NabbitemuFrame, wxFrame)
+	EVT_PAINT(NabbitemuFrame::OnPaint)
+	EVT_SIZE(NabbitemuFrame::OnResize)
+	EVT_MENU(ID_File_New, NabbitemuFrame::OnFileNew)
+	EVT_MENU(ID_File_Open, NabbitemuFrame::OnFileOpen)
+	EVT_MENU(ID_File_Save, NabbitemuFrame::OnFileSave)
+	EVT_MENU(ID_File_Close, NabbitemuFrame::OnFileClose)
+	EVT_MENU(ID_File_Gif, NabbitemuFrame::OnFileGIF)
+	EVT_MENU(ID_File_Quit, NabbitemuFrame::OnFileQuit)
 	
-	EVT_MENU(ID_Calc_Pause, WabbitemuFrame::OnPauseEmulation)
-	EVT_MENU(ID_View_Skin, WabbitemuFrame::OnViewSkin)
-	EVT_MENU(ID_View_Vars, WabbitemuFrame::OnViewVariables)
-	EVT_MENU(ID_Speed_Custom, WabbitemuFrame::OnSetSpeedCustom)
-	EVT_MENU(ID_Speed_500, WabbitemuFrame::OnSetSpeed)
-	EVT_MENU(ID_Speed_400, WabbitemuFrame::OnSetSpeed)
-	EVT_MENU(ID_Speed_200, WabbitemuFrame::OnSetSpeed)
-	EVT_MENU(ID_Speed_100, WabbitemuFrame::OnSetSpeed)
-	EVT_MENU(ID_Speed_50, WabbitemuFrame::OnSetSpeed)
-	EVT_MENU(ID_Speed_25, WabbitemuFrame::OnSetSpeed)
+	EVT_MENU(ID_Calc_Pause, NabbitemuFrame::OnPauseEmulation)
+	EVT_MENU(ID_View_Skin, NabbitemuFrame::OnViewSkin)
+	EVT_MENU(ID_View_Vars, NabbitemuFrame::OnViewVariables)
+	EVT_MENU(ID_Speed_Custom, NabbitemuFrame::OnSetSpeedCustom)
+	EVT_MENU(ID_Speed_500, NabbitemuFrame::OnSetSpeed)
+	EVT_MENU(ID_Speed_400, NabbitemuFrame::OnSetSpeed)
+	EVT_MENU(ID_Speed_200, NabbitemuFrame::OnSetSpeed)
+	EVT_MENU(ID_Speed_100, NabbitemuFrame::OnSetSpeed)
+	EVT_MENU(ID_Speed_50, NabbitemuFrame::OnSetSpeed)
+	EVT_MENU(ID_Speed_25, NabbitemuFrame::OnSetSpeed)
 	
-	EVT_MENU(ID_Size_100, WabbitemuFrame::OnSetSize)
-	EVT_MENU(ID_Size_200, WabbitemuFrame::OnSetSize)
-	EVT_MENU(ID_Size_300, WabbitemuFrame::OnSetSize)
-	EVT_MENU(ID_Size_400, WabbitemuFrame::OnSetSize)
+	EVT_MENU(ID_Size_100, NabbitemuFrame::OnSetSize)
+	EVT_MENU(ID_Size_200, NabbitemuFrame::OnSetSize)
+	EVT_MENU(ID_Size_300, NabbitemuFrame::OnSetSize)
+	EVT_MENU(ID_Size_400, NabbitemuFrame::OnSetSize)
 	
-	EVT_MENU(ID_Debug_Reset, WabbitemuFrame::OnDebugReset)
-	EVT_MENU(ID_Debug_Open, WabbitemuFrame::OnDebugOpen)
-	EVT_MENU(ID_Debug_On, WabbitemuFrame::OnDebugOn)
+	EVT_MENU(ID_Debug_Reset, NabbitemuFrame::OnDebugReset)
+	EVT_MENU(ID_Debug_Open, NabbitemuFrame::OnDebugOpen)
+	EVT_MENU(ID_Debug_On, NabbitemuFrame::OnDebugOn)
 	
-	EVT_MENU(ID_Help_Setup, WabbitemuFrame::OnHelpSetup)
-	EVT_MENU(ID_Help_Website, WabbitemuFrame::OnHelpWebsite)
-	EVT_MENU(ID_Help_About, WabbitemuFrame::OnHelpAbout)
+	EVT_MENU(ID_Help_Setup, NabbitemuFrame::OnHelpSetup)
+	EVT_MENU(ID_Help_Website, NabbitemuFrame::OnHelpWebsite)
+	EVT_MENU(ID_Help_About, NabbitemuFrame::OnHelpAbout)
 	
-	EVT_KEY_DOWN(WabbitemuFrame::OnKeyDown)
-	EVT_KEY_UP(WabbitemuFrame::OnKeyUp)
-	EVT_CLOSE(WabbitemuFrame::OnQuit)
+	EVT_KEY_DOWN(NabbitemuFrame::OnKeyDown)
+	EVT_KEY_UP(NabbitemuFrame::OnKeyUp)
+	EVT_CLOSE(NabbitemuFrame::OnQuit)
 	
-	EVT_LEFT_DOWN(WabbitemuFrame::OnLeftButtonDown)
-	EVT_LEFT_UP(WabbitemuFrame::OnLeftButtonUp)
+	EVT_LEFT_DOWN(NabbitemuFrame::OnLeftButtonDown)
+	EVT_LEFT_UP(NabbitemuFrame::OnLeftButtonUp)
 END_EVENT_TABLE()
 
-IMPLEMENT_APP(WabbitemuApp)
+IMPLEMENT_APP(NabbitemuApp)
 
 inline wxBitmap wxGetBitmapFromMemory(const unsigned char *data, int length) {
    wxMemoryInputStream is(data, length);
@@ -131,13 +131,15 @@ void gui_debug(LPCALC lpCalc) {
 	}
 	lpCalc->running = FALSE;
 	calc_pause_linked();
-	WabbitemuDebugger *debugger = new WabbitemuDebugger(NULL, lpCalc);
+	NabbitemuDebugger *debugger = new NabbitemuDebugger(NULL, lpCalc);
 	debugger->Show();
 }
 
-int WabbitemuFrame::gui_draw() {
-	wxLCD->Refresh();
-	wxLCD->Update();
+int NabbitemuFrame::gui_draw() {
+	// Refresh instead of Update: paint events coalesce with the display, so a
+	// slow frame no longer blocks the timer and redraws twice (OnPaint used to
+	// force another synchronous update in skin mode).
+	wxLCD->Refresh(false);
 
 	if (lpCalc->gif_disp_state != GDS_IDLE) {
 		static int skip = 0;
@@ -150,17 +152,17 @@ int WabbitemuFrame::gui_draw() {
 	return 0;
 }
 
-extern WabbitemuFrame *frames[MAX_CALCS];
-WabbitemuFrame * gui_frame(LPCALC lpCalc) {
+extern NabbitemuFrame *frames[MAX_CALCS];
+NabbitemuFrame * gui_frame(LPCALC lpCalc) {
 	if (!lpCalc->scale) {
     	lpCalc->scale = 2; //Set original scale
 	}
     
-	WabbitemuFrame *mainFrame = new WabbitemuFrame(lpCalc);
+	NabbitemuFrame *mainFrame = new NabbitemuFrame(lpCalc);
 	mainFrame->Show(true);
 	frames[lpCalc->slot] = mainFrame;
 
-	mainFrame->wxLCD = new WabbitemuLCD(mainFrame, lpCalc);
+	mainFrame->wxLCD = new NabbitemuLCD(mainFrame, lpCalc);
 	mainFrame->wxLCD->Show(true);
 	if (lpCalc->SkinEnabled) {
 		mainFrame->wxLCD->Move((mainFrame->GetClientSize().GetWidth() - lpCalc->cpu.pio.lcd->width * lpCalc->scale) / 2, 0);
@@ -178,7 +180,7 @@ WabbitemuFrame * gui_frame(LPCALC lpCalc) {
 	return mainFrame;
 }
 
-void WabbitemuFrame::gui_frame_update() {
+void NabbitemuFrame::gui_frame_update() {
 	wxMenuBar *wxMenu = this->GetMenuBar();
 	switch(lpCalc->model) {
 		case TI_81:
@@ -215,6 +217,11 @@ void WabbitemuFrame::gui_frame_update() {
 			lpCalc->calcSkin = wxGetBitmapFromMemory(TI_83P_png, sizeof(TI_83P_png)).ConvertToImage();
 			lpCalc->keymap = wxGetBitmapFromMemory(TI_83PKeymap_png, sizeof(TI_83PKeymap_png)).ConvertToImage();
 			break;
+	}
+	if (lpCalc->calcSkin.IsOk()) {
+		// Keep a ready-to-draw bitmap: drawing the wxImage directly re-converts
+		// the whole 350x725 skin on every paint event.
+		m_skinBitmap = wxBitmap(lpCalc->calcSkin);
 	}
 	int skinWidth, skinHeight, keymapWidth, keymapHeight;
 	
@@ -298,7 +305,7 @@ void WabbitemuFrame::gui_frame_update() {
 	this->SendSizeEvent();
 }
 
-WabbitemuFrame::WabbitemuFrame(LPCALC lpCalc) : wxFrame(NULL, wxID_ANY, wxT("Wabbitemu"))
+NabbitemuFrame::NabbitemuFrame(LPCALC lpCalc) : wxFrame(NULL, wxID_ANY, wxT("Nabbitemu"))
 {
 	this->lpCalc = lpCalc;
 	this->skinWindow = new SkinWindow(this, lpCalc);
@@ -506,70 +513,75 @@ WabbitemuFrame::WabbitemuFrame(LPCALC lpCalc) : wxFrame(NULL, wxID_ANY, wxT("Wab
 	
 	this->SetIcon(icon);
 	
-	this->Connect(wxEVT_SHOW, (wxObjectEventFunction) &WabbitemuFrame::OnShow);
+	this->Connect(wxEVT_SHOW, (wxObjectEventFunction) &NabbitemuFrame::OnShow);
 	
 	this->SetSize(windowSize);
 }
 
-void WabbitemuFrame::OnShow(wxShowEvent& event) {
+void NabbitemuFrame::OnShow(wxShowEvent& event) {
 	this->isShownVar = 1;
 }
 
-void WabbitemuFrame::OnResize(wxSizeEvent& event) {
+void NabbitemuFrame::OnResize(wxSizeEvent& event)
+{
 	event.Skip(true);
-	if (lpCalc->SkinEnabled ) {
-		if (wxLCD) {
-			wxLCD->Move(lpCalc->LCDRect.GetX(), lpCalc->LCDRect.GetY());
-		}
+	if (wxLCD == NULL) {
+		return;
+	}
+	if (lpCalc->SkinEnabled) {
+		wxLCD->Move(lpCalc->LCDRect.GetX(), lpCalc->LCDRect.GetY());
 		return;
 	}
 	if (is_resizing) {
 		return;
 	}
-	
-	int width_scale = GetClientSize().GetWidth() / 128;
-	int height_scale = GetClientSize().GetHeight() / 64;
-	int scale = max(2, max(width_scale, height_scale));
 
-	lpCalc->scale = min(2, scale);
-	wxSize size(scale * 128, scale * 64);
-	is_resizing = true;
-	this->SetClientSize(size);
-	this->Move(scale * (128 - lpCalc->cpu.pio.lcd->width), 0);
-	is_resizing = false;
-	if (!lpCalc->SkinEnabled && wxLCD) {
-		if (this->isShownVar == 1) {
-			if (wxLCD->IsShown()) {
-				wxLCD->Move((GetClientSize().GetWidth() - lpCalc->cpu.pio.lcd->width * scale) / 2, 0);
-			} else {
-				printf("WARNING: wxLCD->IsShown() returned false - NOT moving.\n");
-			}
-		} else {
-			printf("WARNING: this->isShownVar == 1 returned false - NOT moving.\n");
-		}
+	// Keep the biggest integer scale that fits, then snap the window to it.
+	// The old code clamped the scale to 2 (so resizing did nothing) and moved
+	// the *frame* instead of the LCD child, which made the window walk away.
+	const wxSize client = GetClientSize();
+	int scale = min(client.GetWidth() / 128, client.GetHeight() / 64);
+	scale = max(1, min(8, scale));
+
+	const int lcdWidth = lpCalc->cpu.pio.lcd->width;
+	if (scale != lpCalc->scale) {
+		lpCalc->scale = scale;
+		is_resizing = true;
+		this->SetClientSize(scale * 128, scale * 64);
+		is_resizing = false;
 	}
+	lpCalc->LCDRect.SetX((scale * 128 - lcdWidth * scale) / 2);
+	lpCalc->LCDRect.SetY(0);
+	lpCalc->LCDRect.SetSize(wxSize(lcdWidth * scale, 64 * scale));
+	wxLCD->SetClientSize(lpCalc->LCDRect.GetSize());
+	wxLCD->Move(lpCalc->LCDRect.GetPosition());
 }
 
-void WabbitemuFrame::OnPaint(wxPaintEvent& event)
+void NabbitemuFrame::OnPaint(wxPaintEvent& event)
 {
 	wxPaintDC dc(this);
-	if (lpCalc->SkinEnabled) {
-		this->wxLCD->Update();
-		dc.DrawBitmap(lpCalc->calcSkin, 0, 0, true);
+	if (lpCalc->SkinEnabled && m_skinBitmap.IsOk()) {
+		wxLCD->Refresh(false);
+		dc.DrawBitmap(m_skinBitmap, 0, 0, true);
 	}
 }
 
-void WabbitemuFrame::OnFileNew(wxCommandEvent &event) {
-	TCHAR *newFilePath = (TCHAR *) malloc(PATH_MAX);
-	_tcscpy(newFilePath, lpCalc->rom_path);
+void NabbitemuFrame::OnFileNew(wxCommandEvent &event) {
+	TCHAR *newFilePath = (TCHAR *) malloc(MAX_PATH * sizeof(TCHAR));
+	if (newFilePath == NULL) {
+		return;
+	}
+	_tcsncpy(newFilePath, lpCalc->rom_path, MAX_PATH - 1);
+	newFilePath[MAX_PATH - 1] = _T('\0');
 	lpCalc = calc_slot_new();
-	if (rom_load(lpCalc, newFilePath) == -1) {
+	if (rom_load(lpCalc, newFilePath) != TRUE) {
 		wxMessageBox(wxT("Failed to create new calc"));
 	}
+	free(newFilePath);
 	gui_frame(lpCalc);
 }
 
-void WabbitemuFrame::OnFileOpen(wxCommandEvent &event) {
+void NabbitemuFrame::OnFileOpen(wxCommandEvent &event) {
 	wxString lpstrFilter 	= wxT("\
 Known File Types|*.73p;*.73P;*.82*;*.83p*;*.83P*;*.8xp*;*.8Xp*;*.8XP*;*.8xP*;*.8xk;*.8Xk;*.8XK;*.8xK;*.73k;*.73K;*.sav;*.rom;*.lab;*.8xu;*.8Xu;*.8xU;*.8XU|\
 Calculator Program Files  (*.73p;*.82*;*.83p*;*.8xp*)|*.73p;*.73P;*.82*;*.83p*;*.83P*;*.8xp*;*.8Xp*;*.8XP*;*.8xP*|\
@@ -585,7 +597,7 @@ All Files (*.*)|*.*\0");
 	filepath[0] = '\0';
 	filestr[0] = '\0';
 	
-	wxFileDialog dialog(NULL, wxT("Wabbitemu Open File"),
+	wxFileDialog dialog(NULL, wxT("Nabbitemu Open File"),
 	wxT(""), wxT(""), lpstrFilter, wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
 	if (dialog.ShowModal() != wxID_OK) {
 		return;	
@@ -601,14 +613,14 @@ All Files (*.*)|*.*\0");
 	}
 }
 
-void WabbitemuFrame::OnFileSave(wxCommandEvent &event) {
+void NabbitemuFrame::OnFileSave(wxCommandEvent &event) {
 	TCHAR FileName[MAX_PATH];
 	const TCHAR lpstrFilter[] = _T("\
 Known File types ( *.sav; *.rom; *.bin) |*.sav;*.rom;*.bin|\
 Save States  (*.sav)|*.sav|\
 ROMS  (*.rom; .bin)|*.rom;*.bin|\
 All Files (*.*)|*.*\0");
-	if (!SaveFile(FileName, lpstrFilter, _T("Wabbitemu Save State"), _T(".sav"))) {
+	if (!SaveFile(FileName, lpstrFilter, _T("Nabbitemu Save State"), _T(".sav"))) {
 		return;
 	}	
 	SAVESTATE_t* save = SaveSlot(lpCalc);
@@ -618,11 +630,11 @@ All Files (*.*)|*.*\0");
 	WriteSave(FileName, save, false);
 }
 
-void WabbitemuFrame::OnFileClose(wxCommandEvent &event) {
+void NabbitemuFrame::OnFileClose(wxCommandEvent &event) {
 	Close(TRUE);
 }
 
-void WabbitemuFrame::OnSetSize(wxCommandEvent &event) {
+void NabbitemuFrame::OnSetSize(wxCommandEvent &event) {
 	/* This function is called when user changes size of LCD in menu */
     wxMenuBar *wxMenu = this->GetMenuBar();
     if (lpCalc->SkinEnabled) {
@@ -655,12 +667,19 @@ void WabbitemuFrame::OnSetSize(wxCommandEvent &event) {
 			break;
 	}
 	if (!lpCalc->SkinEnabled) {
-		/* Update size of frame to match the new LCD Size */
-		this->SetSize(128 * lpCalc->scale, 64 * lpCalc->scale);
+		/* Update the client area (not the decorated frame) to the LCD size. */
+		this->SetClientSize(128 * lpCalc->scale, 64 * lpCalc->scale);
+		lpCalc->LCDRect.SetX((128 - lpCalc->cpu.pio.lcd->width) * lpCalc->scale / 2);
+		lpCalc->LCDRect.SetY(0);
+		lpCalc->LCDRect.SetSize(wxSize(lpCalc->cpu.pio.lcd->width * lpCalc->scale, 64 * lpCalc->scale));
+		if (this->wxLCD) {
+			this->wxLCD->SetClientSize(lpCalc->LCDRect.GetSize());
+			this->wxLCD->Move(lpCalc->LCDRect.GetPosition());
+		}
 	}
 }
 
-void WabbitemuFrame::OnSetSpeed(wxCommandEvent &event) {
+void NabbitemuFrame::OnSetSpeed(wxCommandEvent &event) {
 	wxMenuBar *wxMenu = this->GetMenuBar();
 	int eventID;
 	wxMenu->Check(ID_Speed_500, false);
@@ -702,10 +721,10 @@ void WabbitemuFrame::OnSetSpeed(wxCommandEvent &event) {
 	}
 }
 
-void WabbitemuFrame::OnSetSpeedCustom(wxCommandEvent &event) {
+void NabbitemuFrame::OnSetSpeedCustom(wxCommandEvent &event) {
 	wxMenuBar *wxMenu = this->GetMenuBar();
 	long resp;
-	resp = wxGetNumberFromUser(wxString(wxT("Enter the speed (in percentage) you wish to set:")), wxString(wxT("")), wxString(wxT("Wabbitemu - Custom Speed")), 100, 0, 10000);
+	resp = wxGetNumberFromUser(wxString(wxT("Enter the speed (in percentage) you wish to set:")), wxString(wxT("")), wxString(wxT("Nabbitemu - Custom Speed")), 100, 0, 10000);
 	if (resp != -1) {
 		wxMenu->SetLabel(ID_Speed_Custom, wxString::Format(wxT("%i%%"),resp));
 		wxMenu->Check(ID_Speed_500, false);
@@ -729,7 +748,7 @@ void WabbitemuFrame::OnSetSpeedCustom(wxCommandEvent &event) {
 	}
 }
 
-void WabbitemuFrame::OnPauseEmulation(wxCommandEvent &event) {
+void NabbitemuFrame::OnPauseEmulation(wxCommandEvent &event) {
 	wxMenuBar *wxMenu = this->GetMenuBar();
 	if (lpCalc->running) {
 		//Tick is checked and emulation stops
@@ -742,11 +761,11 @@ void WabbitemuFrame::OnPauseEmulation(wxCommandEvent &event) {
 	}
 }
 
-void WabbitemuFrame::SetSpeed(int speed) {
+void NabbitemuFrame::SetSpeed(int speed) {
 	lpCalc->speed = speed;
 }
 
-void WabbitemuFrame::OnKeyDown(wxKeyEvent& event)
+void NabbitemuFrame::OnKeyDown(wxKeyEvent& event)
 {
 	int keycode = event.GetKeyCode();
 	if (keycode == WXK_F8) {
@@ -776,7 +795,7 @@ void WabbitemuFrame::OnKeyDown(wxKeyEvent& event)
 	}
 }
 
-void WabbitemuFrame::OnKeyUp(wxKeyEvent& event)
+void NabbitemuFrame::OnKeyUp(wxKeyEvent& event)
 {
 	int key = event.GetKeyCode();
 	if (key == WXK_SHIFT) {
@@ -788,7 +807,7 @@ void WabbitemuFrame::OnKeyUp(wxKeyEvent& event)
 	FinalizeButtons();
 }
 
-void WabbitemuFrame::OnLeftButtonDown(wxMouseEvent& event)
+void NabbitemuFrame::OnLeftButtonDown(wxMouseEvent& event)
 {
 	event.Skip(true);
 	static wxPoint pt;
@@ -834,7 +853,7 @@ void WabbitemuFrame::OnLeftButtonDown(wxMouseEvent& event)
 	}
 }
 
-void WabbitemuFrame::OnLeftButtonUp(wxMouseEvent& event)
+void NabbitemuFrame::OnLeftButtonUp(wxMouseEvent& event)
 {
 	int group, bit;
 	event.Skip(true);
@@ -869,12 +888,12 @@ void WabbitemuFrame::OnLeftButtonUp(wxMouseEvent& event)
 	FinalizeButtons();
 }
 
-void WabbitemuFrame::OnFileQuit(wxCommandEvent& WXUNUSED(event))
+void NabbitemuFrame::OnFileQuit(wxCommandEvent& WXUNUSED(event))
 {
 	Close(TRUE);
 }
 
-void WabbitemuFrame::OnViewSkin(wxCommandEvent& event)
+void NabbitemuFrame::OnViewSkin(wxCommandEvent& event)
 {
 	wxMenuBar *wxMenu = this->GetMenuBar();
 	lpCalc->SkinEnabled = !lpCalc->SkinEnabled;
@@ -890,17 +909,17 @@ void WabbitemuFrame::OnViewSkin(wxCommandEvent& event)
 	if (lpCalc->SkinEnabled) {
 		prevCalcScale = lpCalc->scale;
 		lpCalc->scale = 2;
-		this->Disconnect(wxEVT_SIZE, (wxObjectEventFunction) &WabbitemuFrame::OnResize);
+		this->Disconnect(wxEVT_SIZE, (wxObjectEventFunction) &NabbitemuFrame::OnResize);
 	} else {
 		lpCalc->scale = prevCalcScale;
-		this->Connect(wxEVT_SIZE, (wxObjectEventFunction) &WabbitemuFrame::OnResize);
+		this->Connect(wxEVT_SIZE, (wxObjectEventFunction) &NabbitemuFrame::OnResize);
 	}
 	gui_frame_update();
 	this->Refresh();
 	this->Update();
 }
 
-void WabbitemuFrame::OnViewVariables(wxCommandEvent & WXUNUSED(event))
+void NabbitemuFrame::OnViewVariables(wxCommandEvent & WXUNUSED(event))
 {
 	wxWindow *foundWindow = wxWindow::FindWindowByName(_T("Calculator Variables"), this);
 	if (foundWindow && foundWindow == varTree) {
@@ -912,55 +931,59 @@ void WabbitemuFrame::OnViewVariables(wxCommandEvent & WXUNUSED(event))
 	}
 }
 
-void WabbitemuFrame::OnDebugOpen(wxCommandEvent& WXUNUSED(event))
+void NabbitemuFrame::OnDebugOpen(wxCommandEvent& WXUNUSED(event))
 {
 	gui_debug(lpCalc);
 }
 
-void WabbitemuFrame::OnDebugReset(wxCommandEvent& WXUNUSED(event))
+void NabbitemuFrame::OnDebugReset(wxCommandEvent& WXUNUSED(event))
 {
 	calc_reset(lpCalc);
 }
 
-void WabbitemuFrame::OnDebugOn(wxCommandEvent& WXUNUSED(event))
+void NabbitemuFrame::OnDebugOn(wxCommandEvent& WXUNUSED(event))
 {
 	calc_turn_on(lpCalc);
 }
 
-void WabbitemuFrame::OnHelpSetup(wxCommandEvent& WXUNUSED(event))
+void NabbitemuFrame::OnHelpSetup(wxCommandEvent& WXUNUSED(event))
 {
 	int count = calc_count();
-	bool success = WabbitemuApp::DoRomWizard();
+	bool success = NabbitemuApp::DoRomWizard();
 	if (!success) {
 		return;
 	}
 }
 
-void WabbitemuFrame::OnHelpWebsite(wxCommandEvent& WXUNUSED(event))
+void NabbitemuFrame::OnHelpWebsite(wxCommandEvent& WXUNUSED(event))
 {
-#ifdef _LINUX
-	system("xdg-open http://code.google.com/p/wxwabbitemu/");
-#endif
+	wxLaunchDefaultBrowser(wxT("https://repo.nebuff.xyz/nabbitemu/"));
 }
 
-void WabbitemuFrame::OnHelpAbout(wxCommandEvent& WXUNUSED(event))
+void NabbitemuFrame::OnHelpAbout(wxCommandEvent& WXUNUSED(event))
 {
-	wxMessageBox(wxT("wxWabbitEmu is a port of Wabbitemu that is cross-platform."), wxT("About Wabbitemu"), wxOK | wxICON_INFORMATION, this);
+	wxMessageBox(wxT("Nabbitemu - a TI-8x graphing calculator emulator for Linux.\n\n")
+		wxT("Based on wxWabbitemu by Albert Huang and Chris Shappell, which in turn\n")
+		wxT("is based on Wabbitemu by Spencer Putt, Don Straney, Chris Shappell and\n")
+		wxT("James Montelongo. Licensed under the GPL.\n\n")
+		wxT("Project page: https://repo.nebuff.xyz/nabbitemu/"),
+		wxT("About Nabbitemu"), wxOK | wxICON_INFORMATION, this);
 }
 
-void WabbitemuFrame::OnFileGIF(wxCommandEvent& WXUNUSED(event))
+void NabbitemuFrame::OnFileGIF(wxCommandEvent& WXUNUSED(event))
 {
 	wxMenuBar *wxMenu = this->GetMenuBar();
-	wxFileDialog* saveGIFDialog = new wxFileDialog(NULL, wxT("Save GIF file"), wxT(""), wxT(""), wxT("\
+	wxFileDialog saveGIFDialog(NULL, wxT("Save GIF file"), wxT(""), wxT(""), wxT("\
 GIF File (*.gif)|*.GIF;*.gif;*.Gif;*.GIf;*.gIf;*.gIF;*.giF|\
 All Files (*.*)|*.*\0"),wxFD_SAVE|wxFD_OVERWRITE_PROMPT, wxDefaultPosition);
-	if (saveGIFDialog->ShowModal() != wxID_OK)
+	if (saveGIFDialog.ShowModal() != wxID_OK)
 		return;
 	wxString path;
-	path.append( saveGIFDialog->GetDirectory() );
+	path.append( saveGIFDialog.GetDirectory() );
 	path.append( wxFileName::GetPathSeparator() );
-	path.append( saveGIFDialog->GetFilename() );
-	_tcscpy(gif_file_name, path.c_str());
+	path.append( saveGIFDialog.GetFilename() );
+	_tcsncpy(gif_file_name, path.c_str(), ARRAYSIZE(gif_file_name) - 1);
+	gif_file_name[ARRAYSIZE(gif_file_name) - 1] = _T('\0');
 	// Now to actually do something!
 	if (gif_write_state == GIF_IDLE) {
 		gif_write_state = GIF_START;
@@ -977,13 +1000,13 @@ All Files (*.*)|*.*\0"),wxFD_SAVE|wxFD_OVERWRITE_PROMPT, wxDefaultPosition);
 	}
 }
 
-void WabbitemuFrame::OnQuit(wxCloseEvent& event)
+void NabbitemuFrame::OnQuit(wxCloseEvent& event)
 {
 	lpCalc->active = FALSE;
 	event.Skip();
 }
 
-void WabbitemuFrame::FinalizeButtons() {
+void NabbitemuFrame::FinalizeButtons() {
 	int group, bit;
 	keypad_t *kp = lpCalc->cpu.pio.keypad;
 	for(group = 0; group < 7; group++) {
@@ -998,15 +1021,16 @@ void WabbitemuFrame::FinalizeButtons() {
 }
 
 int SetGIFName() {
-	wxFileDialog* saveGIFDialog = new wxFileDialog(NULL, wxT("Save GIF file"), wxT(""), wxT(""), wxT("\
+	wxFileDialog saveGIFDialog(NULL, wxT("Save GIF file"), wxT(""), wxT(""), wxT("\
 GIF File (*.gif)|*.GIF;*.gif;*.Gif;*.GIf;*.gIf;*.gIF;*.giF|\
 All Files (*.*)|*.*\0"),wxFD_SAVE|wxFD_OVERWRITE_PROMPT, wxDefaultPosition);
-	if (saveGIFDialog->ShowModal() != wxID_OK)
+	if (saveGIFDialog.ShowModal() != wxID_OK)
 		return false;
 	wxString path;
-	path.append( saveGIFDialog->GetDirectory() );
+	path.append( saveGIFDialog.GetDirectory() );
 	path.append( wxFileName::GetPathSeparator() );
-	path.append( saveGIFDialog->GetFilename() );
-	_tcscpy(gif_file_name, path.c_str());
+	path.append( saveGIFDialog.GetFilename() );
+	_tcsncpy(gif_file_name, path.c_str(), ARRAYSIZE(gif_file_name) - 1);
+	gif_file_name[ARRAYSIZE(gif_file_name) - 1] = _T('\0');
 	return true;
 }

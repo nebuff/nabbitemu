@@ -17,26 +17,26 @@ enum
 	ID_Mem_GotoText,
 };
 
-BEGIN_EVENT_TABLE(WabbitemuDebugger, wxFrame)
-	EVT_CLOSE(WabbitemuDebugger::OnClose)
+BEGIN_EVENT_TABLE(NabbitemuDebugger, wxFrame)
+	EVT_CLOSE(NabbitemuDebugger::OnClose)
 	
-	EVT_TOOL(ID_Toolbar_Run, WabbitemuDebugger::OnToolbarRun)
-	EVT_TOOL(ID_Toolbar_Break, WabbitemuDebugger::OnToolbarBreak)
-	EVT_TOOL(ID_Toolbar_Watch_Break, WabbitemuDebugger::OnToolbarMemBreak)
-	EVT_TOOL(ID_Toolbar_Step, WabbitemuDebugger::OnToolbarStep)
-	EVT_TOOL(ID_Toolbar_StepOver, WabbitemuDebugger::OnToolbarStepOver)
-	EVT_TOOL(ID_Toolbar_Goto, WabbitemuDebugger::OnToolbarGoto)
+	EVT_TOOL(ID_Toolbar_Run, NabbitemuDebugger::OnToolbarRun)
+	EVT_TOOL(ID_Toolbar_Break, NabbitemuDebugger::OnToolbarBreak)
+	EVT_TOOL(ID_Toolbar_Watch_Break, NabbitemuDebugger::OnToolbarMemBreak)
+	EVT_TOOL(ID_Toolbar_Step, NabbitemuDebugger::OnToolbarStep)
+	EVT_TOOL(ID_Toolbar_StepOver, NabbitemuDebugger::OnToolbarStepOver)
+	EVT_TOOL(ID_Toolbar_Goto, NabbitemuDebugger::OnToolbarGoto)
 	
-	EVT_BUTTON(ID_Disasm_GotoButton, WabbitemuDebugger::OnDisasmGoto)
-	EVT_TEXT_ENTER(ID_Disasm_GotoText, WabbitemuDebugger::OnDisasmGotoEnter)
+	EVT_BUTTON(ID_Disasm_GotoButton, NabbitemuDebugger::OnDisasmGoto)
+	EVT_TEXT_ENTER(ID_Disasm_GotoText, NabbitemuDebugger::OnDisasmGotoEnter)
 	
-	EVT_COLLAPSIBLEPANE_CHANGED(wxID_ANY, WabbitemuDebugger::OnCollapsiblePaneChanged)
+	EVT_COLLAPSIBLEPANE_CHANGED(wxID_ANY, NabbitemuDebugger::OnCollapsiblePaneChanged)
 END_EVENT_TABLE()
 
-WabbitemuDebugger::WabbitemuDebugger(WabbitemuFrame *frame, LPCALC lpCalc) :
+NabbitemuDebugger::NabbitemuDebugger(NabbitemuFrame *frame, LPCALC lpCalc) :
 	wxFrame(frame, wxDEBUGGERID, wxT("Debugger"), wxDefaultPosition, wxSize(800, 600))
 {
-	this->wabbitemuFrame = frame;
+	this->nabbitemuFrame = frame;
 	this->lpCalc = lpCalc;
 	
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
@@ -232,24 +232,24 @@ void CPU_stepover(LPCALC lpCalc) {
 	}
 }
 
-void WabbitemuDebugger::OnCollapsiblePaneChanged(wxCollapsiblePaneEvent & WXUNUSED(event)) {
+void NabbitemuDebugger::OnCollapsiblePaneChanged(wxCollapsiblePaneEvent & WXUNUSED(event)) {
 	m_panel4->Layout();
 }
 
-void WabbitemuDebugger::OnClose(wxCloseEvent& event) {
+void NabbitemuDebugger::OnClose(wxCloseEvent& event) {
 	calc_unpause_linked();
 	lpCalc->running =TRUE;
 	event.Skip();
 }
 
-void WabbitemuDebugger::DebugUpdateWindow() {
+void NabbitemuDebugger::DebugUpdateWindow() {
 	regPane->DebugUpdateWindow();
 	flagsPane->DebugUpdateWindow();
 	cpuPane->DebugUpdateWindow();
 	m_disasmView->DebugUpdateWindow();
 }
 
-void WabbitemuDebugger::OnToolbarRun(wxCommandEvent & WXUNUSED(event)) {
+void NabbitemuDebugger::OnToolbarRun(wxCommandEvent & WXUNUSED(event)) {
 	if (lpCalc->running) {
 		lpCalc->running = FALSE;
 		calc_pause_linked();
@@ -266,7 +266,7 @@ void WabbitemuDebugger::OnToolbarRun(wxCommandEvent & WXUNUSED(event)) {
 	}
 }
 
-void WabbitemuDebugger::OnToolbarBreak(wxCommandEvent & WXUNUSED(event)) {
+void NabbitemuDebugger::OnToolbarBreak(wxCommandEvent & WXUNUSED(event)) {
 	int itemIndex = m_disasmView->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 	if (itemIndex == -1) {
 		return;
@@ -279,7 +279,7 @@ void WabbitemuDebugger::OnToolbarBreak(wxCommandEvent & WXUNUSED(event)) {
 	DebugUpdateWindow();
 }
 
-void WabbitemuDebugger::OnToolbarMemBreak(wxCommandEvent & WXUNUSED(event)) {
+void NabbitemuDebugger::OnToolbarMemBreak(wxCommandEvent & WXUNUSED(event)) {
 	int itemIndex = m_disasmView->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 	if (itemIndex == -1) {
 		return;
@@ -292,7 +292,7 @@ void WabbitemuDebugger::OnToolbarMemBreak(wxCommandEvent & WXUNUSED(event)) {
 	DebugUpdateWindow();
 }
 
-void WabbitemuDebugger::OnToolbarStep(wxCommandEvent & WXUNUSED(event)) {
+void NabbitemuDebugger::OnToolbarStep(wxCommandEvent & WXUNUSED(event)) {
 	CPU_step(&lpCalc->cpu);
 	m_disasmView->Refresh();
 	m_disasmView->Update();
@@ -300,7 +300,7 @@ void WabbitemuDebugger::OnToolbarStep(wxCommandEvent & WXUNUSED(event)) {
 	DebugUpdateWindow();
 }
 
-void WabbitemuDebugger::OnToolbarGoto(wxCommandEvent & WXUNUSED(event)) {
+void NabbitemuDebugger::OnToolbarGoto(wxCommandEvent & WXUNUSED(event)) {
 	if (m_disasmGotoPanel->IsShown()) {
 		m_disasmGotoPanel->Hide();
 	} else {
@@ -309,7 +309,7 @@ void WabbitemuDebugger::OnToolbarGoto(wxCommandEvent & WXUNUSED(event)) {
 	bSizer3->Layout();
 }
 
-void WabbitemuDebugger::OnDisasmGoto(wxCommandEvent & WXUNUSED(event)) {
+void NabbitemuDebugger::OnDisasmGoto(wxCommandEvent & WXUNUSED(event)) {
 	std::stringstream ss;
 	int addressToGoto;
 	ss << std::hex << m_disasmGotoText->GetValue(); 
@@ -325,11 +325,11 @@ void WabbitemuDebugger::OnDisasmGoto(wxCommandEvent & WXUNUSED(event)) {
 	bSizer3->Layout();
 }
 
-void WabbitemuDebugger::OnDisasmGotoEnter(wxCommandEvent & event) {
+void NabbitemuDebugger::OnDisasmGotoEnter(wxCommandEvent & event) {
 	OnDisasmGoto(event);
 }
 
-void WabbitemuDebugger::OnToolbarStepOver(wxCommandEvent & WXUNUSED(event)) {
+void NabbitemuDebugger::OnToolbarStepOver(wxCommandEvent & WXUNUSED(event)) {
 	CPU_stepover(lpCalc);
 	m_disasmView->Refresh();
 	m_disasmView->Update();

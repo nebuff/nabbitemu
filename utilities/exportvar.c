@@ -11,7 +11,7 @@ const char fileheader[]= {
 	'*','*','T','I','8','3','F','*',0x1A,0x0A,0x00};
 const char flashheader[] = {
 	'*','*','T','I','F','L','*','*'} ;
-const char comment[42] = "File Exported by Wabbitemu.";
+const char comment[42] = "File Exported by Nabbitemu.";
 
 TCHAR type_ext[][4] = {
 	_T("8xn"),

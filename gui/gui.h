@@ -25,10 +25,10 @@ enum
 	ID_LCD,
 };
 
-class WabbitemuFrame: public wxFrame
+class NabbitemuFrame: public wxFrame
 {
 public:
-    WabbitemuFrame(LPCALC);
+    NabbitemuFrame(LPCALC);
    	wxWindow *wxLCD;
     
 	void OnKeyDown(wxKeyEvent& event);
@@ -43,6 +43,7 @@ private:
 	wxWindow *skinWindow;
 	bool is_resizing;
 	VarTree *varTree;
+	wxBitmap m_skinBitmap;
 	//menu items
 	void OnFileQuit(wxCommandEvent& event);
 	void OnFileClose(wxCommandEvent& event);
@@ -87,5 +88,5 @@ private:
 };
 int SetGIFName();
 void gui_debug(LPCALC lpCalc);
-WabbitemuFrame* gui_frame(LPCALC lpCalc);
+NabbitemuFrame* gui_frame(LPCALC lpCalc);
 #endif
